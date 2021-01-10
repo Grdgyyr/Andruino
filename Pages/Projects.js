@@ -1,8 +1,6 @@
 import React, { Component } from "react";
 import { StyleSheet, View } from "react-native";
-
 import { Asset } from "expo-asset";
-import AssetUtils from "expo-asset-utils";
 
 import AppLoading from "expo-app-loading";
 import {
@@ -25,79 +23,63 @@ import {
   List,
   ListItem,
 } from "native-base";
-import * as Font from "expo-font";
 import { Ionicons, Entypo, AntDesign } from "@expo/vector-icons";
-import PDFReader from "rn-pdf-reader-js";
 import * as FileSystem from "expo-file-system";
 import * as IntentLauncher from "expo-intent-launcher";
-
-//import video1 from "./assets/1.pdf";
-
-const projectArduinoSolarTracker = (
-  <Container>
-    <Text>
-      Description: Sun tracking solar panels can absorb more energy from the Sun
-      than fixed panels. Thus, panels with Solar tracking systems are more
-      efficient as they can capture maximum solar energy. In this do-it-yourself
-      type article, a Sun tracking solar panel using light sensors and servo
-      motors, which are controlled by Arduino, is explained.
-    </Text>
-  </Container>
-);
 
 const dataArray = [
   {
     title: "Activity 1 - Blinking LED",
-    content: projectArduinoSolarTracker,
+    content: {},
     pdf: require("../assets/activities/1.pdf"),
     description:
       "Sun tracking solar panels can absorb more energy from the Sun than fixed panels.",
   },
   {
     title: "Activity 2 - Button with LED",
-    content: projectArduinoSolarTracker,
+    content: {},
     pdf: require("../assets/activities/2.pdf"),
     description:
       "7 Segment displays are one of the most commonly used displays. They are used in numerous of applications for displaying vital information.",
   },
   {
     title: "Activity 3 - Button with RGB LED",
-    content: projectArduinoSolarTracker,
+    content: {},
     pdf: require("../assets/activities/3.pdf"),
     description:
       "Light Sensor is a device that detects radiant energy or light.",
   },
   {
-    title: "Activity 4_ Using the Photoresistor and LED",
-    content: projectArduinoSolarTracker,
+    title: "Activity 4 - Using the Photoresistor and LED",
+    content: {},
     pdf: require("../assets/activities/4.pdf"),
     description:
       "This project presents an alarm clock using Arduino. Real time clock is used in order to get accurate time.",
   },
   {
-    title: "Activity 5_ Series Blinking LED",
-    content: projectArduinoSolarTracker,
+    title: "Activity 5 - Series Blinking LED",
+    content: {},
     pdf: require("../assets/activities/5.pdf"),
     description:
       "LED matrix is nothing but two dimensional arrangement of LEDs in rows and columns.",
   },
   {
-    title: "Activity 6_ DC Motor with Temperature Sensor",
-    content: projectArduinoSolarTracker,
+    title: "Activity 6 - DC Motor with Temperature Sensor",
+    content: {},
     pdf: require("../assets/activities/6.pdf"),
     description:
       "LED matrix is nothing but two dimensional arrangement of LEDs in rows and columns.",
   },
   {
-    title: "Activity 7_ Multiple DC Motor with Temperature Sensor",
-    content: projectArduinoSolarTracker,
+    title: "Activity 7 - Multiple DC Motor with Temperature Sensor",
+    content: {},
     pdf: require("../assets/activities/7.pdf"),
     description:
       "LED matrix is nothing but two dimensional arrangement of LEDs in rows and columns.",
   },
   {
-    title: "Activity 8_ Potentiometer-controlled DC Motor",
-    content: projectArduinoSolarTracker,
+    title: "Activity 8 - Potentiometer-controlled DC Motor",
+    content: {},
     pdf: require("../assets/activities/8.pdf"),
     description:
       "LED matrix is nothing but two dimensional arrangement of LEDs in rows and columns.",
@@ -114,14 +96,7 @@ export default class Projects extends Component {
   }
 
   async componentDidMount() {
-    //console.log(FileSystem.readDirectoryAsync("file://assets"));
-    //console.log(FileSystem.documentDirectory);
     this.loadListProjects();
-    //console.log(await Asset.loadAsync(require("./assets/1.pdf")));
-    // const sqliteDB = await AssetUtils.resolveAsync(require("./assets/1.pdf"));
-
-    // console.log(`Copying ${sqliteDB.localUri} to ${dbPath}`);
-    // await FileSystem.copyAsync({ from: sqliteDB.localUri, to: dbPath });
   }
   _renderHeader(item, expanded) {
     return (
@@ -150,20 +125,6 @@ export default class Projects extends Component {
     return <Container>{item.content}</Container>;
   }
 
-  // loadAccordion() {
-  //   this.setState({
-  //     content: (
-  //       <Accordion
-  //         dataArray={dataArray}
-  //         animation={true}
-  //         expanded={true}
-  //         renderHeader={this._renderHeader}
-  //         renderContent={this._renderContent}
-  //       />
-  //     ),
-  //   });
-  // }
-
   async loadAccordionContent(dat) {
     const pdf = await Asset.loadAsync(dat.pdf);
     console.log(pdf[0].localUri);
@@ -175,31 +136,6 @@ export default class Projects extends Component {
         type: "application/pdf",
       });
     });
-    //console.log(pdf[0].localUri);
-    // this.setState({
-    //   content: (
-    //     <>
-    //       {/* <Text>{dat.title}</Text>
-    //       <Text>{dat.description}</Text> */}
-
-    //       <PDFReader
-    //         source={{
-    //           uri: pdf[0].localUri,
-    //         }}
-    //         withScroll={true}
-    //         withPinchZoom={true}
-    //       />
-
-    //       <Button
-    //         onPress={(x) => {
-    //           this.loadListProjects();
-    //         }}
-    //       >
-    //         <Text>Back</Text>
-    //       </Button>
-    //     </>
-    //   ),
-    // });
   }
 
   loadListProjects() {
@@ -233,10 +169,6 @@ export default class Projects extends Component {
   }
 
   render() {
-    // if (!this.state.isReady) {
-    //   return <AppLoading />;
-    // }
-
     return <Container>{this.state.content}</Container>;
   }
 }

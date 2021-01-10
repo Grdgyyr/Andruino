@@ -31,6 +31,7 @@ import {
 import * as Font from "expo-font";
 import { Ionicons, Entypo, AntDesign } from "@expo/vector-icons";
 import Projects from "./Pages/Projects";
+import Lessons from "./Pages/Lessons";
 
 const dataArray = [
   { title: "First Element", content: "Lorem ipsum dolor sit amet" },
@@ -71,7 +72,9 @@ export default class App extends React.Component {
 
           <Content>
             <Tabs>
-              <Tab heading="LESSONS"></Tab>
+              <Tab heading="LESSONS">
+                <Lessons />
+              </Tab>
               <Tab heading="QUIZZES"></Tab>
               <Tab heading="ACTIVITIES">
                 <Projects />
