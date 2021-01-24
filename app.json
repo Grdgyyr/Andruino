@@ -10,10 +10,13 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "packagerOpts": {
+      "assetExts": ["db"]
+    },
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": ["assets/activities*", "assets/lessons*"],
+    "assetBundlePatterns": ["assets/activities*", "assets/lessons*", "**/*"],
     "ios": {
       "supportsTablet": true
     },
