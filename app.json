@@ -11,12 +11,17 @@
       "backgroundColor": "#ffffff"
     },
     "packagerOpts": {
-      "assetExts": ["db"]
+      "assetExts": ["db", "PNG"]
     },
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": ["assets/activities*", "assets/lessons*", "**/*"],
+    "assetBundlePatterns": [
+      "assets/activities*",
+      "assets/lessons*",
+      "**/*",
+      "assets/quiz*"
+    ],
     "ios": {
       "supportsTablet": true
     },

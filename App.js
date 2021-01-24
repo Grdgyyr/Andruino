@@ -32,6 +32,7 @@ import * as Font from "expo-font";
 import { Ionicons, Entypo, AntDesign } from "@expo/vector-icons";
 import Projects from "./Pages/Projects";
 import Lessons from "./Pages/Lessons";
+import Quiz from "./Pages/Quiz";
 import * as SQLite from "expo-sqlite";
 //const db = SQLite.openDatabase("andruino.db");
 import { Asset } from "expo-asset";
@@ -41,68 +42,6 @@ const dataArray = [
   { title: "First Element", content: "Lorem ipsum dolor sit amet" },
   { title: "Second Element", content: "Lorem ipsum dolor sit amet" },
   { title: "Third Element", content: "Lorem ipsum dolor sit amet" },
-];
-
-const defaultQuizData = [
-  {
-    q1: {
-      name: "",
-      ans: [
-        "Reset Button",
-        "AREF",
-        "Ground Pin",
-        "Digital Input/Output",
-        "PWM",
-        "USB Connection",
-        "TX/RX ",
-        "ATmega Microcontroller",
-        "Power LED Indicator",
-        "Voltage Regulator",
-        "DC Power Barrel Jack",
-        "3.3V Pin",
-        "5V Pin",
-        "Ground Pins",
-        "Analog Pins",
-      ],
-      userAns: [],
-      dateFinished: "",
-    },
-    q2: {
-      name: "",
-      ans: [
-        "Menu Bar",
-        "Verify Button",
-        "Upload Button",
-        "New Sketch",
-        "Sketch Name",
-        "Open Existing Sketch",
-        "Save Sketch",
-        "Serial Monitor",
-        "Code Area",
-        "Message Area",
-        "Text Console",
-        "Board and Serial Port",
-      ],
-      userAns: [],
-      dateFinished: "",
-    },
-    q3: {
-      name: "",
-      ans: ["e", "b", "j", "d", "k", "a", "g", "h", "f", "c", "i", "l"],
-      userAns: [],
-      dateFinished: "",
-    },
-    q4: { name: "", ans: [], userAns: [], dateFinished: "" },
-    q5: { name: "", ans: [], userAns: [], dateFinished: "" },
-    q6: { name: "", ans: [], userAns: [], dateFinished: "" },
-    q7: { name: "", ans: [], userAns: [], dateFinished: "" },
-    q8: { name: "", ans: [], userAns: [], dateFinished: "" },
-    q9: { name: "", ans: [], userAns: [], dateFinished: "" },
-    q10: { name: "", ans: [], userAns: [], dateFinished: "" },
-    q11: { name: "", ans: [], userAns: [], dateFinished: "" },
-    q12: { name: "", ans: [], userAns: [], dateFinished: "" },
-    q13: { name: "", ans: [], userAns: [], dateFinished: "" },
-  },
 ];
 
 export default class App extends React.Component {
@@ -136,8 +75,9 @@ export default class App extends React.Component {
       Asset.fromModule(require("./assets/db/andruino.db")).uri,
       FileSystem.documentDirectory + "SQLite/andruino.db"
     );
-
     let db = SQLite.openDatabase("andruino.db");
+
+    //console.log(defaultQuizData);
 
     db.transaction(
       (tx) => {
@@ -157,7 +97,9 @@ export default class App extends React.Component {
           <Tab heading="LESSONS">
             <Lessons />
           </Tab>
-          <Tab heading="QUIZZES">ss</Tab>
+          <Tab heading="QUIZZES">
+            <Quiz />
+          </Tab>
           <Tab heading="ACTIVITIES">
             <Projects />
           </Tab>
@@ -187,7 +129,7 @@ export default class App extends React.Component {
     });
   }
 
-  loadHome() {
+  async loadHome() {
     this.setState({
       content: (
         <Container
@@ -198,7 +140,6 @@ export default class App extends React.Component {
           }}
         >
           <Text>Homes Page</Text>
-          <AntDesign name="codesquareo"></AntDesign>
         </Container>
       ),
       selectedPage: "home",
