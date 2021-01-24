@@ -44,6 +44,8 @@ export default class App extends React.Component {
     super(props);
     this.state = {
       isReady: false,
+      content: <></>,
+      selectedPage: "",
     };
   }
 
@@ -54,6 +56,56 @@ export default class App extends React.Component {
       ...Ionicons.font,
     });
     this.setState({ isReady: true });
+    this.loadHome();
+  }
+
+  loadTab() {
+    this.setState({
+      content: (
+        <Tabs>
+          <Tab heading="LESSONS">
+            <Lessons />
+          </Tab>
+          <Tab heading="QUIZZES"></Tab>
+          <Tab heading="ACTIVITIES">
+            <Projects />
+          </Tab>
+        </Tabs>
+      ),
+      selectedPage: "study",
+    });
+  }
+  loadProfile() {
+    this.setState({
+      content: (
+        <Content>
+          <Text>Profile With Picture</Text>
+        </Content>
+      ),
+      selectedPage: "profile",
+    });
+  }
+  loadScore() {
+    this.setState({
+      content: (
+        <Content>
+          <Text>Scores</Text>
+        </Content>
+      ),
+      selectedPage: "score",
+    });
+  }
+
+  loadHome() {
+    this.setState({
+      content: (
+        <Container>
+          <Text>Homes Page</Text>
+          <AntDesign name="codesquareo"></AntDesign>
+        </Container>
+      ),
+      selectedPage: "home",
+    });
   }
 
   render() {
@@ -65,51 +117,67 @@ export default class App extends React.Component {
       <Container>
         <SafeAreaView style={styles.container}>
           <Header hasTabs>
+            <Left>
+              <Button transparent>
+                <Icon name="arrow-back" />
+              </Button>
+            </Left>
             <Body>
-              <Title>Arduino Uno</Title>
+              <Title>Andruino</Title>
             </Body>
           </Header>
 
-          <Content>
-            <Tabs>
-              <Tab heading="LESSONS">
-                <Lessons />
-              </Tab>
-              <Tab heading="QUIZZES"></Tab>
-              <Tab heading="ACTIVITIES">
-                <Projects />
-              </Tab>
-            </Tabs>
-          </Content>
+          <Content>{this.state.content}</Content>
           <Footer>
             <FooterTab>
-              <Button badge vertical>
+              <Button
+                badge
+                onPress={(x) => this.loadTab()}
+                vertical
+                info={this.state.selectedPage === "study"}
+              >
                 <Badge>
                   <Text>1</Text>
                 </Badge>
                 <Entypo name="open-book" size={24} color="black" />
                 <Text>STUDY</Text>
               </Button>
-              <Button badge vertical>
+              <Button
+                badge
+                vertical
+                info={this.state.selectedPage === "score"}
+                onPress={(x) => this.loadScore()}
+              >
                 <Badge>
                   <Text>1</Text>
                 </Badge>
                 <Entypo name="progress-full" size={24} color="black" />
                 <Text>PERFORMANCE</Text>
               </Button>
-              <Button badge vertical>
-                <Badge>
-                  <Text>1</Text>
-                </Badge>
-                <Ionicons name="notifications" size={24} color="black" />
-                <Text>NOTIFICATIONS</Text>
-              </Button>
-              <Button badge vertical>
+
+              <Button
+                badge
+                vertical
+                info={this.state.selectedPage === "profile"}
+                onPress={(x) => this.loadProfile()}
+              >
                 <Badge>
                   <Text>1</Text>
                 </Badge>
                 <Entypo name="user" size={24} color="black" />
                 <Text>PROFILE</Text>
+              </Button>
+              <Button
+                badge
+                vertical
+                info={this.state.selectedPage === "home"}
+                onPress={(x) => this.loadHome()}
+              >
+                <Badge>
+                  <Text>1</Text>
+                </Badge>
+                <Ionicons name="home" size={24} color="black" />
+                <Text>HOME</Text>
               </Button>
             </FooterTab>
           </Footer>
