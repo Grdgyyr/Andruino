@@ -93,7 +93,7 @@ export default class App extends React.Component {
   loadTab() {
     this.setState({
       content: (
-        <Tabs>
+        <Tabs style={{ height: 2000 }}>
           <Tab heading="LESSONS">
             <Lessons />
           </Tab>

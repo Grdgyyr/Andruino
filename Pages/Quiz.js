@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, ScrollView } from "react-native";
 import { Asset } from "expo-asset";
 
 import AppLoading from "expo-app-loading";
@@ -22,6 +22,11 @@ import {
   Accordion,
   List,
   ListItem,
+  Item,
+  Picker,
+  Form,
+  View,
+  Label,
 } from "native-base";
 import { Ionicons, Entypo, AntDesign } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
@@ -42,11 +47,71 @@ export default class Quiz extends Component {
     await this.loadListQuiz();
   }
 
-  async loadQuiz() {
-    const png = await Asset.loadAsync(require("../assets/quiz/1.png"));
-    FileSystem.getContentUriAsync(png[0].localUri).then((x) => {
-      this.setState({ quizContent: <ImageViewer imageUrls={[{ url: x }]} /> });
+  async loadQuiz(data) {
+    const imgData = data.img;
+    let quizImg = [];
+
+    for (let index = 0; index < imgData.length; index++) {
+      const imgPath = await Asset.loadAsync(imgData[index]);
+      const finalPath = await FileSystem.getContentUriAsync(
+        imgPath[0].localUri
+      );
+      quizImg.push({ url: finalPath });
+    }
+    this.setState({
+      content: (
+        <Container>
+          {/* <Content style={{ position: "absolute" }}>
+            
+          </Content> */}
+          <Button
+            onPress={(x) => {
+              this.loadListQuiz();
+            }}
+          >
+            <Icon name="arrow-back" />
+          </Button>
+          <ImageViewer style={{ padding: 50 }} imageUrls={quizImg} />
+          {data.ans.map((x, index) => {
+            return this._renderQuestionInputs(x, index);
+          })}
+
+          {/* <Content style={{ position: "absolute" }}></Content> */}
+        </Container>
+      ),
     });
+
+    // const png = await Asset.loadAsync(require("../assets/quiz/1.png"));
+    // FileSystem.getContentUriAsync(png[0].localUri).then((x) => {
+    //   this.setState({ content: <ImageViewer imageUrls={[{ url: x }]} /> });
+    // });
+  }
+
+  _renderQuestionInputs(data, index) {
+    const abc = [
+      <Picker.Item label="A" key={"a1"} value="key0" />,
+      <Picker.Item label="B" key={"a2"} value="key1" />,
+      <Picker.Item label="C" key={"a3"} value="key2" />,
+      <Picker.Item label="D" key={"a4"} value="key3" />,
+    ];
+
+    return (
+      // <Text key={index}>{index}</Text>
+      <Item key={index} picker>
+        <Label>{`${index + 1}. `}</Label>
+        <Picker
+          mode="dropdown"
+          iosIcon={<Icon name="arrow-down" />}
+          style={{ width: undefined }}
+          placeholder={index}
+          placeholderStyle={{ color: "#bfc6ea" }}
+          placeholderIconColor="#007aff"
+          selectedValue={null}
+        >
+          {abc}
+        </Picker>
+      </Item>
+    );
   }
   _renderHeader(item, expanded) {
     return (
@@ -91,9 +156,9 @@ export default class Quiz extends Component {
               <ListItem
                 key={index}
                 button
-                // onPress={() => {
-                //   this.loadAccordionContent(x);
-                // }}
+                onPress={() => {
+                  this.loadQuiz(x);
+                }}
               >
                 <Body>
                   <Text>{x.name}</Text>
