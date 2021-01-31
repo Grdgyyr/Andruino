@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { StyleSheet, ScrollView } from "react-native";
+import { StyleSheet, ScrollView, View } from "react-native";
 import { Asset } from "expo-asset";
 
 import AppLoading from "expo-app-loading";
@@ -25,7 +25,6 @@ import {
   Item,
   Picker,
   Form,
-  View,
   Label,
 } from "native-base";
 import { Ionicons, Entypo, AntDesign } from "@expo/vector-icons";
@@ -58,26 +57,48 @@ export default class Quiz extends Component {
       );
       quizImg.push({ url: finalPath });
     }
+    console.log(data);
     this.setState({
       content: (
-        <Container>
-          {/* <Content style={{ position: "absolute" }}>
-            
-          </Content> */}
-          <Button
-            onPress={(x) => {
-              this.loadListQuiz();
+        <View
+          style={{
+            flex: 1,
+          }}
+        >
+          <View style={{ flexDirection: "row" }}>
+            <Button
+              onPress={(x) => {
+                this.loadListQuiz();
+              }}
+            >
+              <Icon name="arrow-back" />
+            </Button>
+            <View style={{ flexGrow: 1 }}>
+              <Text
+                style={{
+                  textAlign: "center",
+                  textAlignVertical: "center",
+                  fontSize: 25,
+                  fontWeight: "bold",
+                }}
+              >
+                {data.name}
+              </Text>
+            </View>
+          </View>
+
+          <ImageViewer style={{ flex: 1 }} imageUrls={quizImg} />
+
+          <ScrollView
+            style={{
+              flex: 1,
             }}
           >
-            <Icon name="arrow-back" />
-          </Button>
-          <ImageViewer style={{ padding: 50 }} imageUrls={quizImg} />
-          {data.ans.map((x, index) => {
-            return this._renderQuestionInputs(x, index);
-          })}
-
-          {/* <Content style={{ position: "absolute" }}></Content> */}
-        </Container>
+            {data.ans.map((x, index) => {
+              return this._renderQuestionInputs(x, index);
+            })}
+          </ScrollView>
+        </View>
       ),
     });
 
@@ -150,29 +171,31 @@ export default class Quiz extends Component {
   loadListQuiz() {
     this.setState({
       content: (
-        <List>
-          {defaultQuizData.map((x, index) => {
-            return (
-              <ListItem
-                key={index}
-                button
-                onPress={() => {
-                  this.loadQuiz(x);
-                }}
-              >
-                <Body>
-                  <Text>{x.name}</Text>
-                  {/* <Text numberOfLines={1} style={{}} note>
+        <ScrollView>
+          <List>
+            {defaultQuizData.map((x, index) => {
+              return (
+                <ListItem
+                  key={index}
+                  button
+                  onPress={() => {
+                    this.loadQuiz(x);
+                  }}
+                >
+                  <Body>
+                    <Text>{x.name}</Text>
+                    {/* <Text numberOfLines={1} style={{}} note>
                     {x.description}
                   </Text> */}
-                </Body>
-                <Right>
-                  <Entypo name="star-outlined" size={24} color="black" />
-                </Right>
-              </ListItem>
-            );
-          })}
-        </List>
+                  </Body>
+                  <Right>
+                    <Entypo name="star-outlined" size={24} color="black" />
+                  </Right>
+                </ListItem>
+              );
+            })}
+          </List>
+        </ScrollView>
       ),
     });
   }

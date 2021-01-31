@@ -93,7 +93,7 @@ export default class App extends React.Component {
   loadTab() {
     this.setState({
       content: (
-        <Tabs style={{ height: 2000 }}>
+        <Tabs locked>
           <Tab heading="LESSONS">
             <Lessons />
           </Tab>
@@ -152,9 +152,9 @@ export default class App extends React.Component {
     }
 
     return (
-      <Container>
-        <SafeAreaView style={styles.container}>
-          <Header hasTabs>
+      <SafeAreaView style={{ flex: 1 }}>
+        <View style={{}}>
+          <Header style={{}} hasTabs>
             <Left>
               <Button transparent>
                 <Icon name="arrow-back" />
@@ -164,9 +164,11 @@ export default class App extends React.Component {
               <Title>Andruino</Title>
             </Body>
           </Header>
+        </View>
+        <View style={{ flex: 10 }}>{this.state.content}</View>
 
-          <Content>{this.state.content}</Content>
-          <Footer>
+        <View style={{}}>
+          <Footer style={{}}>
             <FooterTab>
               <Button
                 badge
@@ -219,8 +221,8 @@ export default class App extends React.Component {
               </Button>
             </FooterTab>
           </Footer>
-        </SafeAreaView>
-      </Container>
+        </View>
+      </SafeAreaView>
     );
   }
 }
