@@ -82,11 +82,9 @@ export default class App extends React.Component {
     db.transaction(
       (tx) => {
         // tx.executeSql("insert into user (done, value) values (0, ?)", []);
-        tx.executeSql("select * from user", [], (_, { rows }) =>
-          console.log(rows)
-        );
+        tx.executeSql("select * from user", [], (_, { rows }) => console.log());
       },
-      (x) => console.log(x)
+      (x) => console.log()
     );
   }
 
