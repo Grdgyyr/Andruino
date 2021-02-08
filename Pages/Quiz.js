@@ -26,6 +26,7 @@ import {
   Picker,
   Form,
   Label,
+  Input,
 } from "native-base";
 import { Ionicons, Entypo, AntDesign } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
@@ -39,6 +40,11 @@ const abc = [
   <Picker.Item label="D" key={"a4"} value="D" />,
   <Picker.Item label="-" key={"a5"} value="-" />,
 ];
+const truefalse = [
+  <Picker.Item label="A" key={"a1"} value="TRUE" />,
+  <Picker.Item label="B" key={"a2"} value="FALSE" />,
+  <Picker.Item label="-" key={"a3"} value="-" />,
+];
 
 export default class Quiz extends Component {
   constructor(props) {
@@ -47,45 +53,34 @@ export default class Quiz extends Component {
       isReady: false,
       quizContent: null,
       content: 1,
-      answers: [
-        { id: 1, value: "-" },
-        { id: 2, value: "-" },
-      ],
+      answers: [{ id: 1, value: "-", wrong: false }],
       quizData: [],
       inputChange: this.inputChange.bind(this),
+      contentData: [],
     };
   }
 
-  inputChange = (x, index) => {
-    //this.findAndReplace(testing,2,'ASD');
-    //console.log(index);
+  inputChange = (x, index, type) => {
+    //console.log(x);
     let ans = this.state.answers;
-
-    ans[index + 1] = { id: index + 1, value: x };
-
-    //console.log(x, index, ans);
-
-    // if (ans.length === 0) {
-    //   ans.push({ id: index + 1, value: x });
-    // } else {
-    //   let srch = ans.find((a) => a.id === index + 1);
-    //   if (srch === undefined) ans.push({ id: index + 1, value: x });
-    //   else {
-    //     this.findAndReplace(ans, index + 1, x);
-    //   }
-    // }
-    console.log(ans[index + 1].value);
-
-    this.setState({ answers: ans }, (c) => {
-      //console.log(this.state.answers);
-    });
-
-    // console.log()
-    // this.state.answers.find(s=> s.id ===1)
+    ans[index + 1] = { id: index + 1, value: x, wrong: false };
+    //console.log(ans[index + 1].value);
+    this.setState(
+      (a) => ({
+        answers: {
+          ...a.answers,
+          ans,
+        },
+      }),
+      (c) => {
+        //console.log(this.state.answers[index + 1]);
+      }
+    );
+    //this.setState({ answers: ans }, (c) => {});
   };
 
   async componentDidMount() {
-    await this.loadListQuiz();
+    //await this.loadListQuiz();
   }
 
   async findAndReplace(object, value, replacevalue) {
@@ -117,121 +112,62 @@ export default class Quiz extends Component {
 
     data.ans.forEach((e, i) => {
       this.setState((a) => ({
-        answers: { ...a.answers, [i + 1]: { id: i + 1, value: "-" } },
+        answers: {
+          ...a.answers,
+          [i + 1]: { id: i + 1, value: "-", wrong: false },
+        },
       }));
     });
 
-    const inputs = data.ans.map((x, index) => {
-      return React.createElement(
-        Item,
-        { key: index, picker: true },
-        React.createElement(Label, {}, `${index + 1}. `),
-        React.createElement(
-          Picker,
-          {
-            mode: "dropdown",
-            selectedValue: x.value,
-            key: index + 1,
-            onValueChange: (x) => this.state.inputChange(x, index),
-          },
-          abc
-        )
-      );
-    });
-    console.log(inputs);
+    // const inputs = data.ans.map((x, index) => {
+    //   return React.createElement(
+    //     Item,
+    //     { key: index, picker: true },
+    //     React.createElement(Label, {}, `${index + 1}. `),
+    //     React.createElement(Label, {}, `TST`),
+    //     React.createElement(
+    //       Picker,
+    //       {
+    //         mode: "dropdown",
+    //         selectedValue: x.value,
+    //         key: index + 1,
+    //         onValueChange: (x) => this.state.inputChange(x, index),
+    //       },
+    //       abc
+    //     )
+    //   );
+    // });
+    //console.log(inputs);
     this.setState((a) => ({
       content: 2,
       contentData: data,
       quizPictures: quizImg,
-      //ansInputs: inputs,
     }));
   }
 
-  _renderContent(config) {
-    const KeysToComponentMap = {
-      button: Button,
-      item: Item,
-      picker: Picker,
-    };
-    if (typeof KeysToComponentMap[config.component] !== "undefined") {
-      return React.createElement(
-        KeysToComponentMap[config.component],
-        {
-          src: config.src,
-        },
-        config.children &&
-          (typeof config.children === "string"
-            ? config.children
-            : config.children.map((c) => renderer(c)))
-      );
-    }
-  }
+  checkQuiz() {
+    const arr = this.state.contentData.ans;
+    let finalScore = 0;
 
-  _renderHeader(item, expanded) {
-    return (
-      <View
-        style={{
-          flexDirection: "row",
-          padding: 10,
-          height: 60,
-          borderColor: "black",
-          borderStyle: "solid",
-          justifyContent: "space-between",
-          alignItems: "center",
-          backgroundColor: "#A9DAD6",
-        }}
-      >
-        <Text style={{ fontWeight: "600" }}> {item.title}</Text>
-        {expanded ? (
-          <Icon style={{ fontSize: 18 }} name="remove-circle" />
-        ) : (
-          <Icon style={{ fontSize: 18 }} name="add-circle" />
-        )}
-      </View>
-    );
-  }
-  _renderContent(item) {
-    return <Container>{item.content}</Container>;
-  }
+    arr.forEach((e, i) => {
+      let ans = this.state.answers;
+      if (this.state.answers[i + 1].value.toUpperCase() === e.toUpperCase()) {
+        finalScore++;
 
-  async loadAccordionContent(dat) {
-    const pdf = await Asset.loadAsync(dat.pdf);
-    FileSystem.getContentUriAsync(pdf[0].localUri).then((cUri) => {
-      //console.log(cUri.uri);
+        ans[i + 1] = { ...ans[i + 1], wrong: false };
+      } else {
+        ans[i + 1] = { ...ans[i + 1], wrong: true };
+      }
+      this.setState({ answers: ans }, (c) => {
+        console.log(
+          this.state.answers[i + 1].value.toUpperCase(),
+          e.toUpperCase(),
+          this.state.answers[i + 1].wrong
+        );
+      });
     });
-  }
 
-  loadListQuiz() {
-    // this.setState({
-    //   content: 1,
-    // });
-    return (
-      <ScrollView>
-        <List>
-          {defaultQuizData.map((x, index) => {
-            return (
-              <ListItem
-                key={index}
-                button
-                onPress={() => {
-                  this.loadQuiz(x);
-                }}
-              >
-                <Body>
-                  <Text>{x.name}</Text>
-                  {/* <Text numberOfLines={1} style={{}} note>
-                {x.description}
-              </Text> */}
-                </Body>
-                <Right>
-                  <Entypo name="star-outlined" size={24} color="black" />
-                </Right>
-              </ListItem>
-            );
-          })}
-        </List>
-      </ScrollView>
-    );
+    console.log(finalScore);
   }
 
   render() {
@@ -315,21 +251,70 @@ export default class Quiz extends Component {
                   {this.state.contentData.ans.map((x, index) => {
                     return React.createElement(
                       Item,
-                      { key: index, picker: true },
+                      {
+                        key: index,
+                        picker: true,
+                        style: this.state.answers[index + 1].wrong
+                          ? { backgroundColor: "red" }
+                          : { backgroundColor: "none" },
+                      },
                       React.createElement(Label, {}, `${index + 1}. `),
-                      React.createElement(
-                        Picker,
-                        {
-                          mode: "dropdown",
-                          selectedValue: this.state.answers[index + 1].value,
-                          key: index + 1,
-                          onValueChange: (x) =>
-                            this.state.inputChange(x, index),
-                        },
-                        abc
-                      )
+                      ((x) => {
+                        switch (this.state.contentData.type) {
+                          case 0:
+                            return React.createElement(
+                              Picker,
+                              {
+                                mode: "dropdown",
+                                selectedValue: this.state.answers[index + 1]
+                                  .value,
+                                key: index + 1,
+                                onValueChange: (x) =>
+                                  this.state.inputChange(x, index),
+                              },
+                              abc
+                            );
+                          case 1:
+                            return React.createElement(
+                              Input,
+                              {
+                                selectedValue: this.state.answers[index + 1]
+                                  .value,
+                                key: index + 1,
+                                onChangeText: (text) =>
+                                  this.state.inputChange(text, index),
+                                //,
+                              }
+                              //abc
+                            );
+                          case 2:
+                            return React.createElement(
+                              Picker,
+                              {
+                                mode: "dropdown",
+                                selectedValue: this.state.answers[index + 1]
+                                  .value,
+                                key: index + 1,
+                                onValueChange: (x) =>
+                                  this.state.inputChange(x, index),
+                              },
+                              truefalse
+                            );
+                        }
+                      })(),
+
+                      this.state.answers[index + 1].wrong
+                        ? React.createElement(Label, {}, `CORRECT ANSWER ${x}`)
+                        : null
                     );
                   })}
+                  <Button
+                    onPress={(x) => {
+                      this.checkQuiz(x);
+                    }}
+                  >
+                    <Text>Submit</Text>
+                  </Button>
                 </ScrollView>
               </View>
             );
