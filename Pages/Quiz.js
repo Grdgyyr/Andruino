@@ -32,6 +32,7 @@ import { Ionicons, Entypo, AntDesign } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
 import { defaultQuizData } from "../quizAns";
 import ImageViewer from "react-native-image-zoom-viewer";
+import * as SQLite from "expo-sqlite";
 
 const abc = [
   <Picker.Item label="A" key={"a1"} value="A" />,
@@ -145,12 +146,25 @@ export default class Quiz extends Component {
     }));
   }
 
-  checkQuiz() {
+  async read() {
+    this.props.db.transaction(
+      (tx) => {
+        tx.executeSql(`select * from quiz`, [], (_, { rows }) =>
+          console.log(rows)
+        );
+      },
+      (x) => console.log(x)
+    );
+  }
+
+  async checkQuiz() {
     const arr = this.state.contentData.ans;
     let finalScore = 0;
+    let userAnswers = [];
 
     arr.forEach((e, i) => {
       let ans = this.state.answers;
+      userAnswers.push(this.state.answers[i + 1].value.toUpperCase());
       if (this.state.answers[i + 1].value.toUpperCase() === e.toUpperCase()) {
         finalScore++;
 
@@ -159,15 +173,64 @@ export default class Quiz extends Component {
         ans[i + 1] = { ...ans[i + 1], wrong: true };
       }
       this.setState({ answers: ans }, (c) => {
-        console.log(
-          this.state.answers[i + 1].value.toUpperCase(),
-          e.toUpperCase(),
-          this.state.answers[i + 1].wrong
-        );
+        // console.log(
+        //   this.state.answers[i + 1].value.toUpperCase(),
+        //   e.toUpperCase(),
+        //   this.state.answers[i + 1].wrong
+        // );
       });
     });
 
-    console.log(finalScore);
+    // console.log(
+    //   await FileSystem.readDirectoryAsync(
+    //     FileSystem.documentDirectory + "SQLite/"
+    //   )
+    // );
+
+    let _stringAnswers = JSON.stringify(userAnswers);
+    const stringAnswers = userAnswers.toString();
+    this.props.db.transaction(
+      (tx) => {
+        tx.executeSql(
+          `select * from quiz where quizId = ${Number(
+            this.state.contentData.id
+          )}`,
+          [],
+          (_, { rows }) => {
+            if (rows.length === 0) {
+              this.props.db.transaction(
+                (tx) => {
+                  tx.executeSql(
+                    `insert into quiz (quizId,answer) VALUES (${Number(
+                      this.state.contentData.id
+                    )}, '${stringAnswers}') `,
+                    []
+                  );
+                  tx.executeSql(`select * from quiz`, [], (_, { rows }) =>
+                    console.log(rows)
+                  );
+                },
+                (err) => console.log(err)
+              );
+            } else {
+              this.props.db.transaction(
+                (tx) => {
+                  tx.executeSql(
+                    `update quiz set answer = '${stringAnswers}'`,
+                    []
+                  );
+                  tx.executeSql(`select * from quiz`, [], (_, { rows }) =>
+                    console.log(rows._array[0])
+                  );
+                },
+                (err) => console.log(err)
+              );
+            }
+          }
+        );
+      },
+      (err) => console.log(err)
+    );
   }
 
   render() {
@@ -314,6 +377,13 @@ export default class Quiz extends Component {
                     }}
                   >
                     <Text>Submit</Text>
+                  </Button>
+                  <Button
+                    onPress={(x) => {
+                      this.read(x);
+                    }}
+                  >
+                    <Text>READ</Text>
                   </Button>
                 </ScrollView>
               </View>

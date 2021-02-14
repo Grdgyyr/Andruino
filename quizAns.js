@@ -1,5 +1,6 @@
 export const defaultQuizData = [
   {
+    id: 1,
     name: "Quiz 1",
     ans: [
       "Reset Button",
@@ -24,6 +25,7 @@ export const defaultQuizData = [
     img: [require("./assets/quiz/1.png")],
   },
   {
+    id: 2,
     name: "Quiz 2",
     ans: [
       "Menu Bar",
@@ -45,6 +47,7 @@ export const defaultQuizData = [
     img: [require("./assets/quiz/2-1.png")],
   },
   {
+    id: 3,
     name: "Quiz 2.1",
     ans: ["e", "b", "j", "d", "k", "a", "g", "h", "f", "c", "i", "l"],
     userAns: [],
@@ -53,6 +56,7 @@ export const defaultQuizData = [
     img: [require("./assets/quiz/2-2.png")],
   },
   {
+    id: 4,
     name: "Quiz 3",
     ans: [
       "Photoresistor",
@@ -72,6 +76,7 @@ export const defaultQuizData = [
     img: [require("./assets/quiz/3.png"), require("./assets/quiz/3-1.png")],
   },
   {
+    id: 5,
     name: "Quiz 4",
     ans: ["Mode", "OUTPUT", "loop", "delay", "LOW"],
     userAns: [],
@@ -80,6 +85,7 @@ export const defaultQuizData = [
     img: [require("./assets/quiz/4.png")],
   },
   {
+    id: 6,
     name: "Quiz 5",
     ans: ["led", "loop", "if", "Write", "}"],
     userAns: [],
@@ -88,6 +94,7 @@ export const defaultQuizData = [
     img: [require("./assets/quiz/5.png")],
   },
   {
+    id: 7,
     name: "Quiz 6",
     ans: [1, 2, 1, 1, 2, 2, 1, 2, 1, 2],
     userAns: [],
@@ -96,6 +103,7 @@ export const defaultQuizData = [
     img: [require("./assets/quiz/6.png")],
   },
   {
+    id: 8,
     name: "Unit Test 1",
     ans: [
       "c",
@@ -140,6 +148,7 @@ export const defaultQuizData = [
     ],
   },
   {
+    id: 9,
     name: "Quiz 7",
     ans: ["c", "d", "a", "d", "a", "b", "c", "b"],
     userAns: [],
@@ -148,6 +157,7 @@ export const defaultQuizData = [
     img: [require("./assets/quiz/7.png")],
   },
   {
+    id: 10,
     name: "Quiz 8",
     ans: [
       ";",
@@ -167,6 +177,7 @@ export const defaultQuizData = [
     img: [require("./assets/quiz/8.png")],
   },
   {
+    id: 11,
     name: "Quiz 9",
     ans: ["b", "e", "j", "h", "i", "c", "g", "d", "a", "f"],
     userAns: [],
@@ -175,6 +186,7 @@ export const defaultQuizData = [
     img: [require("./assets/quiz/9.png")],
   },
   {
+    id: 12,
     name: "Quiz 10",
     ans: ["function type", "no", "terminate", "Function", "Parameters"],
     userAns: [],
@@ -183,6 +195,7 @@ export const defaultQuizData = [
     img: [require("./assets/quiz/10.png")],
   },
   {
+    id: 13,
     name: "Quiz 11",
     ans: [1, "written", "less than", 1, 1, 1, 1, 2, 1, 1],
     userAns: [],
@@ -191,6 +204,7 @@ export const defaultQuizData = [
     img: [require("./assets/quiz/11.png")],
   },
   {
+    id: 14,
     name: "Unit Test 2",
     ans: [
       "b",

@@ -37,6 +37,7 @@ import * as SQLite from "expo-sqlite";
 //const db = SQLite.openDatabase("andruino.db");
 import { Asset } from "expo-asset";
 import * as FileSystem from "expo-file-system";
+let db = null;
 
 const dataArray = [
   { title: "First Element", content: "Lorem ipsum dolor sit amet" },
@@ -71,21 +72,24 @@ export default class App extends React.Component {
         FileSystem.documentDirectory + "SQLite"
       );
     }
-    await FileSystem.downloadAsync(
-      Asset.fromModule(require("./assets/db/andruino.db")).uri,
-      FileSystem.documentDirectory + "SQLite/andruino.db"
-    );
-    let db = SQLite.openDatabase("andruino.db");
+    // await FileSystem.downloadAsync(
+    //   Asset.fromModule(require("./assets/db/andruino.db")).uri,
+    //   FileSystem.documentDirectory + "SQLite/andruino.db"
+    // );
+    db = SQLite.openDatabase("andruino.db");
+    //let db = SQLite.openDatabase("andruino.db");
 
     //console.log(defaultQuizData);
 
-    db.transaction(
-      (tx) => {
-        // tx.executeSql("insert into user (done, value) values (0, ?)", []);
-        tx.executeSql("select * from user", [], (_, { rows }) => console.log());
-      },
-      (x) => console.log()
-    );
+    // db.transaction(
+    //   (tx) => {
+    //     // tx.executeSql("insert into user (done, value) values (0, ?)", []);
+    //     // tx.executeSql("select * from user", [], (_, { rows }) =>
+    //     //   console.log(rows)
+    //     // );
+    //   },
+    //   (x) => console.log()
+    // );
   }
 
   loadTab() {
@@ -96,7 +100,7 @@ export default class App extends React.Component {
             <Lessons />
           </Tab>
           <Tab heading="QUIZZES">
-            <Quiz />
+            <Quiz db={db} />
           </Tab>
           <Tab heading="ACTIVITIES">
             <Projects />
@@ -127,6 +131,27 @@ export default class App extends React.Component {
     });
   }
 
+  async resetDB() {
+    await FileSystem.deleteAsync(FileSystem.documentDirectory + "SQLite/");
+    // if (
+    //   !(await FileSystem.getInfoAsync(FileSystem.documentDirectory + "SQLite"))
+    //     .exists
+    // ) {
+    //   await FileSystem.makeDirectoryAsync(
+    //     FileSystem.documentDirectory + "SQLite"
+    //   );
+    // }
+    // await FileSystem.downloadAsync(
+    //   Asset.fromModule(require("./assets/db/andruino.db")).uri,
+    //   FileSystem.documentDirectory + "SQLite/andruino.db"
+    // );
+    console.log(
+      await FileSystem.readDirectoryAsync(
+        FileSystem.documentDirectory + "SQLite/"
+      )
+    );
+  }
+
   async loadHome() {
     this.setState({
       content: (
@@ -138,6 +163,13 @@ export default class App extends React.Component {
           }}
         >
           <Text>Homes Page</Text>
+          <Button
+            onPress={(x) => {
+              this.resetDB(x);
+            }}
+          >
+            <Text>Reset DB</Text>
+          </Button>
         </Container>
       ),
       selectedPage: "home",
