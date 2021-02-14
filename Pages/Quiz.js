@@ -58,6 +58,8 @@ export default class Quiz extends Component {
       quizData: [],
       inputChange: this.inputChange.bind(this),
       contentData: [],
+      newQuiz: true,
+      score: 0,
     };
   }
 
@@ -111,14 +113,64 @@ export default class Quiz extends Component {
     }
     //console.log(data);
 
-    data.ans.forEach((e, i) => {
-      this.setState((a) => ({
-        answers: {
-          ...a.answers,
-          [i + 1]: { id: i + 1, value: "-", wrong: false },
-        },
-      }));
-    });
+    this.props.db.transaction(
+      (tx) => {
+        tx.executeSql(
+          `select * from quiz where quizId = ${Number(data.id)}`,
+          [],
+          (_, { rows }) => {
+            //rows.length === 0
+            if (rows.length === 0) {
+              data.ans.forEach((e, i) => {
+                this.setState((a) => ({
+                  answers: {
+                    ...a.answers,
+                    [i + 1]: { id: i + 1, value: "-", wrong: false },
+                  },
+                }));
+              });
+              this.setState((a) => ({
+                content: 2,
+                contentData: data,
+                quizPictures: quizImg,
+                newQuiz: true,
+              }));
+            } else {
+              const dbAns = rows._array[0].answer.split(",");
+              let finalScore = 0;
+              let userAnswers = [];
+              data.ans.forEach((e, i) => {
+                if (e.toUpperCase() === dbAns[i].toUpperCase()) {
+                  finalScore++;
+
+                  this.setState((a) => ({
+                    answers: {
+                      ...a.answers,
+                      [i + 1]: { id: i + 1, value: dbAns[i], wrong: false },
+                    },
+                  }));
+                } else {
+                  this.setState((a) => ({
+                    answers: {
+                      ...a.answers,
+                      [i + 1]: { id: i + 1, value: dbAns[i], wrong: true },
+                    },
+                  }));
+                }
+              });
+              this.setState((a) => ({
+                content: 2,
+                contentData: data,
+                quizPictures: quizImg,
+                newQuiz: false,
+                score: finalScore,
+              }));
+            }
+          }
+        );
+      },
+      (err) => console.log(err)
+    );
 
     // const inputs = data.ans.map((x, index) => {
     //   return React.createElement(
@@ -139,11 +191,6 @@ export default class Quiz extends Component {
     //   );
     // });
     //console.log(inputs);
-    this.setState((a) => ({
-      content: 2,
-      contentData: data,
-      quizPictures: quizImg,
-    }));
   }
 
   async read() {
@@ -278,7 +325,13 @@ export default class Quiz extends Component {
                   flex: 1,
                 }}
               >
-                <View style={{ flexDirection: "row" }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    marginTop: 10,
+                    marginBottom: 10,
+                  }}
+                >
                   <Button
                     onPress={(x) => {
                       //this.loadListQuiz();
@@ -294,9 +347,18 @@ export default class Quiz extends Component {
                         textAlignVertical: "center",
                         fontSize: 25,
                         fontWeight: "bold",
+                        backgroundColor: this.state.newQuiz
+                          ? "transparent"
+                          : "green",
                       }}
                     >
-                      {this.state.contentData.name}
+                      {(() => {
+                        if (this.state.newQuiz) {
+                          return this.state.contentData.name;
+                        } else {
+                          return `${this.state.contentData.name} Score(${this.state.score}/${this.state.contentData.ans.length})`;
+                        }
+                      })()}
                     </Text>
                   </View>
                 </View>
@@ -315,11 +377,8 @@ export default class Quiz extends Component {
                     return React.createElement(
                       Item,
                       {
-                        key: index,
+                        key: index + "cont",
                         picker: true,
-                        style: this.state.answers[index + 1].wrong
-                          ? { backgroundColor: "red" }
-                          : { backgroundColor: "none" },
                       },
                       React.createElement(Label, {}, `${index + 1}. `),
                       ((x) => {
@@ -332,6 +391,7 @@ export default class Quiz extends Component {
                                 selectedValue: this.state.answers[index + 1]
                                   .value,
                                 key: index + 1,
+                                enabled: this.state.newQuiz,
                                 onValueChange: (x) =>
                                   this.state.inputChange(x, index),
                               },
@@ -341,8 +401,8 @@ export default class Quiz extends Component {
                             return React.createElement(
                               Input,
                               {
-                                selectedValue: this.state.answers[index + 1]
-                                  .value,
+                                value: this.state.answers[index + 1].value,
+                                editable: this.state.newQuiz,
                                 key: index + 1,
                                 onChangeText: (text) =>
                                   this.state.inputChange(text, index),
@@ -367,7 +427,15 @@ export default class Quiz extends Component {
                       })(),
 
                       this.state.answers[index + 1].wrong
-                        ? React.createElement(Label, {}, `CORRECT ANSWER ${x}`)
+                        ? React.createElement(
+                            Label,
+                            {
+                              style: {
+                                backgroundColor: "red",
+                              },
+                            },
+                            `CORRECT ANSWER ${x}`
+                          )
                         : null
                     );
                   })}
