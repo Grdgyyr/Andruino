@@ -2,7 +2,7 @@
   "expo": {
     "name": "ArduinoThesisApp",
     "slug": "ArduinoThesisApp",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -29,7 +29,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "package": "knode.expo.andruino"
     },
     "web": {
       "favicon": "./assets/favicon.png"

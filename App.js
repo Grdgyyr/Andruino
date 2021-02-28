@@ -1,4 +1,3 @@
-import { StatusBar } from "expo-status-bar";
 import React from "react";
 import {
   StyleSheet,
@@ -7,6 +6,7 @@ import {
   TouchableOpacity,
   Image,
   FlatList,
+  Dimensions,
 } from "react-native";
 //import { AppLoading } from "expo";
 import AppLoading from "expo-app-loading";
@@ -27,31 +27,55 @@ import {
   Tabs,
   Badge,
   Accordion,
+  Input,
+  Form,
+  Item,
+  Label,
 } from "native-base";
 import * as Font from "expo-font";
-import { Ionicons, Entypo, AntDesign } from "@expo/vector-icons";
+import { Ionicons, Entypo, AntDesign, FontAwesome5 } from "@expo/vector-icons";
 import Projects from "./Pages/Projects";
 import Lessons from "./Pages/Lessons";
 import Quiz from "./Pages/Quiz";
 import * as SQLite from "expo-sqlite";
-//const db = SQLite.openDatabase("andruino.db");
 import { Asset } from "expo-asset";
 import * as FileSystem from "expo-file-system";
-let db = null;
+import {
+  LineChart,
+  BarChart,
+  PieChart,
+  ProgressChart,
+} from "react-native-chart-kit";
+import { defaultQuizData } from "./quizAns";
+const screenWidth = Dimensions.get("window").width;
+const data = {
+  labels: ["Unit Test", "Quizzes"], // optional
+  data: [0.4, 0.6],
+};
+const chartConfig = {
+  backgroundGradientFrom: "#7a7a7a",
+  //backgroundGradientFromOpacity: 0,
+  backgroundGradientTo: "#7a7a7a",
+  //backgroundGradientToOpacity: 0.5,
 
-const dataArray = [
-  { title: "First Element", content: "Lorem ipsum dolor sit amet" },
-  { title: "Second Element", content: "Lorem ipsum dolor sit amet" },
-  { title: "Third Element", content: "Lorem ipsum dolor sit amet" },
-];
+  color: (opacity = 1) => `rgba(26, 255, 146, ${opacity})`,
+  strokeWidth: 2, // optional, default 3
+  barPercentage: 0.5,
+};
+let db = null;
 
 export default class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      inputChange: this.inputChange.bind(this),
       isReady: false,
       content: <></>,
       selectedPage: "",
+      selectedProfileAction: { value: 0, name: "" },
+      txtName: { value: "", editable: false },
+      txtSchool: { value: "", editable: false },
+      txtTeacher: { value: "", editable: false },
     };
   }
 
@@ -62,7 +86,6 @@ export default class App extends React.Component {
       ...Ionicons.font,
     });
     this.setState({ isReady: true });
-    this.loadHome();
 
     if (
       !(await FileSystem.getInfoAsync(FileSystem.documentDirectory + "SQLite"))
@@ -92,77 +115,294 @@ export default class App extends React.Component {
     // );
   }
 
+  inputChange = (e) => {
+    //console.log(e);
+    this.setState((a) => ({
+      [e.name]: {
+        ...a[e.name],
+        value: e.value,
+        editable: e.editable,
+      },
+    }));
+  };
+
   loadTab() {
-    this.setState({
-      content: (
-        <Tabs locked>
-          <Tab heading="LESSONS">
-            <Lessons />
-          </Tab>
-          <Tab heading="QUIZZES">
-            <Quiz db={db} />
-          </Tab>
-          <Tab heading="ACTIVITIES">
-            <Projects />
-          </Tab>
-        </Tabs>
-      ),
-      selectedPage: "study",
-    });
+    return (
+      <Tabs locked>
+        <Tab heading="LESSONS">
+          <Lessons />
+        </Tab>
+        <Tab heading="QUIZZES">
+          <Quiz db={db} />
+        </Tab>
+        <Tab heading="ACTIVITIES">
+          <Projects />
+        </Tab>
+      </Tabs>
+    );
+  }
+  async getProfileInfo() {
+    db.transaction(
+      (tx) => {
+        tx.executeSql(`select * from user`, [], (_, { rows }) => {
+          this.setState(
+            (a) => ({
+              txtName: {
+                ...a.txtName,
+                value: rows._array[0].name,
+              },
+              txtSchool: {
+                ...a.txtSchool,
+                value: rows._array[0].school,
+              },
+              txtTeacher: {
+                ...a.txtTeacher,
+                value: rows._array[0].teacher,
+              },
+            }),
+            (cb) => {}
+          );
+        });
+      },
+      (x) => console.log(x)
+    );
+  }
+  async saveProfileInfo() {
+    db.transaction(
+      (tx) => {
+        tx.executeSql(
+          `update user set name = '${this.state.txtName.value}', school = '${this.state.txtSchool.value}', teacher = '${this.state.txtTeacher.value}' `,
+          [],
+          (_) => {
+            this.getProfileInfo();
+          }
+        );
+      },
+      (x) => console.log(x)
+    );
   }
   loadProfile() {
-    this.setState({
-      content: (
-        <Content>
-          <Text>Profile With Picture</Text>
-        </Content>
-      ),
-      selectedPage: "profile",
-    });
-  }
-  loadScore() {
-    this.setState({
-      content: (
-        <Content>
-          <Text>Scores</Text>
-        </Content>
-      ),
-      selectedPage: "score",
-    });
-  }
+    return (
+      <Content>
+        <View style={{ flex: 1, paddingTop: 30 }}>
+          <Text
+            style={{
+              textAlign: "center",
+              fontSize: 25,
+              fontWeight: "bold",
+              marginBottom: 15,
+            }}
+          >
+            Student profile
+          </Text>
+          <FontAwesome5
+            name="user-graduate"
+            size={100}
+            style={{ textAlign: "center" }}
+            color="black"
+          />
+          <Form>
+            <Item stackedLabel>
+              <Label>Full Name</Label>
+              <Input
+                onChangeText={(text) => {
+                  this.state.inputChange({
+                    value: text,
+                    name: "txtName",
+                  });
+                }}
+                editable={this.state.txtName.editable}
+                defaultValue={this.state.txtName.value}
+              />
+            </Item>
+            <Item stackedLabel last>
+              <Label>School</Label>
+              <Input
+                onChangeText={(text) => {
+                  this.state.inputChange({
+                    value: text,
+                    name: "txtSchool",
+                  });
+                }}
+                editable={this.state.txtSchool.editable}
+                defaultValue={this.state.txtSchool.value}
+              />
+            </Item>
+            <Item stackedLabel last>
+              <Label>Teacher</Label>
+              <Input
+                onChangeText={(text) => {
+                  this.state.inputChange({
+                    value: text,
+                    name: "txtTeacher",
+                  });
+                }}
+                editable={this.state.txtTeacher.editable}
+                defaultValue={this.state.txtTeacher.value}
+              />
+            </Item>
+          </Form>
+        </View>
+        <View style={{ flexDirection: "row", paddingTop: 10 }}>
+          {this.state.selectedProfileAction.value === 0 ? (
+            <Button
+              onPress={(x) => {
+                this.setState((a) => ({
+                  selectedProfileAction: { value: 2, name: "edit" },
+                  txtName: { ...a.txtName, editable: true },
+                  txtSchool: { ...a.txtSchool, editable: true },
+                  txtTeacher: { ...a.txtTeacher, editable: true },
+                }));
+              }}
+              full
+              style={{ flex: 1, margin: 3 }}
+            >
+              <Text>Edit</Text>
+            </Button>
+          ) : null}
 
-  async resetDB() {
-    await FileSystem.deleteAsync(FileSystem.documentDirectory + "SQLite/");
-    // if (
-    //   !(await FileSystem.getInfoAsync(FileSystem.documentDirectory + "SQLite"))
-    //     .exists
-    // ) {
-    //   await FileSystem.makeDirectoryAsync(
-    //     FileSystem.documentDirectory + "SQLite"
-    //   );
-    // }
-    // await FileSystem.downloadAsync(
-    //   Asset.fromModule(require("./assets/db/andruino.db")).uri,
-    //   FileSystem.documentDirectory + "SQLite/andruino.db"
-    // );
-    console.log(
-      await FileSystem.readDirectoryAsync(
-        FileSystem.documentDirectory + "SQLite/"
-      )
+          {this.state.selectedProfileAction.value === 2 ? (
+            <Button
+              onPress={(x) => {
+                this.setState(
+                  (a) => ({
+                    selectedProfileAction: { value: 0, name: "" },
+                    txtName: { ...a.txtName, editable: false },
+                    txtSchool: { ...a.txtSchool, editable: false },
+                    txtTeacher: { ...a.txtTeacher, editable: false },
+                  }),
+                  (x) => {
+                    this.saveProfileInfo();
+                  }
+                );
+              }}
+              full
+              success
+              style={{ flex: 1, margin: 3 }}
+            >
+              <Text>Save</Text>
+            </Button>
+          ) : null}
+          {this.state.selectedProfileAction.value === 2 ? (
+            <Button
+              full
+              onPress={(x) => {
+                this.setState(
+                  (a) => ({
+                    selectedProfileAction: { value: 0, name: "" },
+                    txtName: { ...a.txtName, editable: false },
+                    txtSchool: { ...a.txtSchool, editable: false },
+                    txtTeacher: { ...a.txtTeacher, editable: false },
+                  }),
+                  (x) => {
+                    this.getProfileInfo();
+                  }
+                );
+              }}
+              warning
+              style={{ flex: 1, margin: 3 }}
+            >
+              <Text>Cancel</Text>
+            </Button>
+          ) : null}
+        </View>
+      </Content>
     );
   }
 
-  async loadHome() {
-    this.setState({
-      content: (
-        <Container
-          style={{
-            flexDirection: "row",
-            alignContent: "center",
-            justifyContent: "center",
-          }}
+  loadScoreData() {
+    let labels = [];
+    defaultQuizData.forEach((e) => {
+      labels.push(e.name.replace("uiz", ""));
+      //console.log(e.name.);
+    });
+  }
+
+  loadScore() {
+    return (
+      <Content>
+        <View
+          style={{ flexDirection: "row", paddingTop: 10, paddingBottom: 10 }}
         >
-          <Text>Homes Page</Text>
+          <Text
+            style={{
+              textAlign: "center",
+              flex: 1,
+              fontSize: 25,
+              fontWeight: "bold",
+            }}
+          >
+            Test progression
+          </Text>
+        </View>
+        <View style={{ flexDirection: "row" }}>
+          <ProgressChart
+            data={data}
+            width={screenWidth}
+            height={220}
+            strokeWidth={16}
+            radius={32}
+            chartConfig={chartConfig}
+            hideLegend={false}
+          />
+        </View>
+      </Content>
+    );
+  }
+
+  async resetDB() {
+    db = null;
+    await FileSystem.deleteAsync(FileSystem.documentDirectory + "SQLite/");
+
+    if (
+      !(await FileSystem.getInfoAsync(FileSystem.documentDirectory + "SQLite"))
+        .exists
+    ) {
+      await FileSystem.makeDirectoryAsync(
+        FileSystem.documentDirectory + "SQLite"
+      );
+    }
+    await FileSystem.downloadAsync(
+      Asset.fromModule(require("./assets/db/andruino.db")).uri,
+      FileSystem.documentDirectory + "SQLite/andruino.db"
+    );
+    db = SQLite.openDatabase("andruino.db");
+    // console.log(
+    //   await FileSystem.readDirectoryAsync(
+    //     FileSystem.documentDirectory + "SQLite/"
+    //   )
+    // );
+  }
+
+  loadHome() {
+    return (
+      <Container
+        style={{
+          flexDirection: "row",
+          alignContent: "center",
+          justifyContent: "center",
+        }}
+      >
+        <View style={{ flex: 1, paddingTop: 30 }}>
+          <Image
+            style={{
+              width: "50%",
+              height: "50%",
+              alignSelf: "center",
+            }}
+            resizeMode="center"
+            source={require("@expo/../../assets/icon.png")}
+          />
+
+          <Text style={{ textAlign: "justify", padding: 15 }}>
+            In this Application, the learners can see predefined images with
+            explanations, and code snippets, which they can copy and paste into
+            the Arduino IDE. Mobile Application for Learning Arduino Uno can
+            help the students learn the Arduino Uno without connecting to WiFi.
+            The app will contain lessons on Arduino Uno that are needed to know.
+            Additionally, it will include quizzes and user’s performance to
+            provide feedback.
+          </Text>
           <Button
             onPress={(x) => {
               this.resetDB(x);
@@ -170,10 +410,9 @@ export default class App extends React.Component {
           >
             <Text>Reset DB</Text>
           </Button>
-        </Container>
-      ),
-      selectedPage: "home",
-    });
+        </View>
+      </Container>
+    );
   }
 
   render() {
@@ -195,20 +434,55 @@ export default class App extends React.Component {
             </Body>
           </Header>
         </View>
-        <View style={{ flex: 10 }}>{this.state.content}</View>
+        <View style={{ flex: 10 }}>
+          {((x) => {
+            switch (this.state.selectedPage) {
+              case "home":
+                return this.loadHome();
+              case "profile":
+                return this.loadProfile();
+              case "study":
+                return this.loadTab();
+              case "score":
+                return this.loadScore();
+              default:
+                return this.loadHome();
+            }
+          })()}
+        </View>
 
         <View style={{}}>
           <Footer style={{}}>
             <FooterTab>
               <Button
                 badge
-                onPress={(x) => this.loadTab()}
+                vertical
+                info={this.state.selectedPage === "home"}
+                onPress={(x) => {
+                  this.setState({
+                    selectedPage: "home",
+                  });
+                }}
+              >
+                {/* <Badge>
+                  <Text>1</Text>
+                </Badge> */}
+                <Ionicons name="home" size={24} color="black" />
+                <Text>HOME</Text>
+              </Button>
+              <Button
+                badge
+                onPress={(x) => {
+                  this.setState({
+                    selectedPage: "study",
+                  });
+                }}
                 vertical
                 info={this.state.selectedPage === "study"}
               >
-                <Badge>
+                {/* <Badge>
                   <Text>1</Text>
-                </Badge>
+                </Badge> */}
                 <Entypo name="open-book" size={24} color="black" />
                 <Text>STUDY</Text>
               </Button>
@@ -216,11 +490,16 @@ export default class App extends React.Component {
                 badge
                 vertical
                 info={this.state.selectedPage === "score"}
-                onPress={(x) => this.loadScore()}
+                onPress={(x) => {
+                  this.loadScoreData();
+                  this.setState({
+                    selectedPage: "score",
+                  });
+                }}
               >
-                <Badge>
+                {/* <Badge>
                   <Text>1</Text>
-                </Badge>
+                </Badge> */}
                 <Entypo name="progress-full" size={24} color="black" />
                 <Text>PERFORMANCE</Text>
               </Button>
@@ -229,25 +508,18 @@ export default class App extends React.Component {
                 badge
                 vertical
                 info={this.state.selectedPage === "profile"}
-                onPress={(x) => this.loadProfile()}
+                onPress={(x) => {
+                  this.setState({
+                    selectedPage: "profile",
+                  });
+                  this.getProfileInfo();
+                }}
               >
-                <Badge>
+                {/* <Badge>
                   <Text>1</Text>
-                </Badge>
+                </Badge> */}
                 <Entypo name="user" size={24} color="black" />
                 <Text>PROFILE</Text>
-              </Button>
-              <Button
-                badge
-                vertical
-                info={this.state.selectedPage === "home"}
-                onPress={(x) => this.loadHome()}
-              >
-                <Badge>
-                  <Text>1</Text>
-                </Badge>
-                <Ionicons name="home" size={24} color="black" />
-                <Text>HOME</Text>
               </Button>
             </FooterTab>
           </Footer>
@@ -256,65 +528,3 @@ export default class App extends React.Component {
     );
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    // marginTop: 20,
-  },
-  list: {
-    //paddingHorizontal: 5,
-    backgroundColor: "#E6E6E6",
-  },
-  listContainer: {
-    alignItems: "center",
-  },
-  /******** card **************/
-  card: {
-    marginHorizontal: 2,
-    marginVertical: 2,
-    flexBasis: "48%",
-  },
-  cardHeader: {
-    paddingVertical: 17,
-    paddingHorizontal: 16,
-    borderTopLeftRadius: 1,
-    borderTopRightRadius: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardContent: {
-    paddingVertical: 12.5,
-    paddingHorizontal: 16,
-  },
-  cardFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingTop: 12.5,
-    paddingBottom: 25,
-    paddingHorizontal: 16,
-    borderBottomLeftRadius: 1,
-    borderBottomRightRadius: 1,
-  },
-  cardImage: {
-    height: 70,
-    width: 70,
-    alignSelf: "center",
-  },
-  title: {
-    fontSize: 16,
-    flex: 1,
-    color: "#FFFFFF",
-    fontWeight: "bold",
-  },
-  subTitle: {
-    fontSize: 12,
-    flex: 1,
-    color: "#FFFFFF",
-  },
-  icon: {
-    height: 20,
-    width: 20,
-  },
-});
