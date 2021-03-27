@@ -7,6 +7,7 @@ import {
   Image,
   FlatList,
   Dimensions,
+  Alert,
 } from "react-native";
 //import { AppLoading } from "expo";
 import AppLoading from "expo-app-loading";
@@ -31,6 +32,8 @@ import {
   Form,
   Item,
   Label,
+  Card,
+  CardItem,
 } from "native-base";
 import * as Font from "expo-font";
 import { Ionicons, Entypo, AntDesign, FontAwesome5 } from "@expo/vector-icons";
@@ -40,6 +43,8 @@ import Quiz from "./Pages/Quiz";
 import * as SQLite from "expo-sqlite";
 import { Asset } from "expo-asset";
 import * as FileSystem from "expo-file-system";
+import { Restart } from "fiction-expo-restart";
+import { Col, Row, Grid } from "react-native-easy-grid";
 import {
   LineChart,
   BarChart,
@@ -48,10 +53,7 @@ import {
 } from "react-native-chart-kit";
 import { defaultQuizData } from "./quizAns";
 const screenWidth = Dimensions.get("window").width;
-const data = {
-  labels: ["Unit Test", "Quizzes"], // optional
-  data: [0.4, 0.6],
-};
+
 const chartConfig = {
   backgroundGradientFrom: "#7a7a7a",
   //backgroundGradientFromOpacity: 0,
@@ -76,6 +78,12 @@ export default class App extends React.Component {
       txtName: { value: "", editable: false },
       txtSchool: { value: "", editable: false },
       txtTeacher: { value: "", editable: false },
+      unitTestPercentage: 0,
+      quizPercentage: 0,
+      totalQuizzes: 0,
+      totalUnitTest: 0,
+      totalQuizzesScore: 0,
+      totalUnitTestScore: 0,
     };
   }
 
@@ -310,12 +318,90 @@ export default class App extends React.Component {
     );
   }
 
-  loadScoreData() {
-    let labels = [];
-    defaultQuizData.forEach((e) => {
-      labels.push(e.name.replace("uiz", ""));
-      //console.log(e.name.);
+  async getQuizData(data) {
+    let totalQuizzes = 0;
+    let totalUnitTest = 0;
+    let totalQuizzesScore = 0;
+    let totalUnitTestScore = 0;
+
+    return new Promise((resolve, reject) => {
+      db.transaction(
+        (tx) => {
+          tx.executeSql(
+            `select * from quiz where quizId = ${Number(data.id)}`,
+            [],
+            (_, { rows }) => {
+              if (rows.length > 0) {
+                const dbAns = rows._array[0].answer.split(",");
+                let finalScore = 0;
+                data.ans.forEach((e, i) => {
+                  if (data.type === 0 || data.type === 1) {
+                    if (e.toUpperCase() === dbAns[i].toUpperCase()) {
+                      finalScore++;
+                    }
+                  } else {
+                    if (e === dbAns[i]) {
+                      finalScore++;
+                    }
+                  }
+                });
+                if (data.examType === 1) {
+                  totalQuizzesScore += finalScore;
+                  totalQuizzes += data.ans.length;
+                } else {
+                  totalUnitTestScore += finalScore;
+                  totalUnitTest += data.ans.length;
+                }
+              } else {
+                if (data.examType === 1) {
+                  totalQuizzes += data.ans.length;
+                } else {
+                  totalUnitTest += data.ans.length;
+                }
+              }
+              resolve({
+                totalQuizzes,
+                totalUnitTest,
+                totalQuizzesScore,
+                totalUnitTestScore,
+              });
+            }
+          );
+        },
+        (err) => console.log(err)
+      );
     });
+  }
+
+  async loadScoreData() {
+    let totalQuizzes = 0;
+    let totalUnitTest = 0;
+    let totalQuizzesScore = 0;
+    let totalUnitTestScore = 0;
+
+    for (let i = 0; i < defaultQuizData.length; i++) {
+      const data = defaultQuizData[i];
+      const quizData = await this.getQuizData(data);
+      totalQuizzes += quizData.totalQuizzes;
+      totalUnitTest += quizData.totalUnitTest;
+      totalQuizzesScore += quizData.totalQuizzesScore;
+      totalUnitTestScore += quizData.totalUnitTestScore;
+    }
+
+    this.setState(
+      (a) => ({
+        totalQuizzes,
+        totalUnitTest,
+        totalQuizzesScore,
+        totalUnitTestScore,
+        quizPercentage: ((totalQuizzesScore / totalQuizzes) * 100).toFixed(2),
+        unitTestPercentage: (
+          (totalUnitTestScore / totalUnitTest) *
+          100
+        ).toFixed(2),
+      }),
+      () => console.log(this.state)
+    );
   }
 
   loadScore() {
@@ -337,7 +423,14 @@ export default class App extends React.Component {
         </View>
         <View style={{ flexDirection: "row" }}>
           <ProgressChart
-            data={data}
+            data={{
+              labels: ["Unit Test", "Quizzes"], // optional\
+              data: [0.4, 0.6],
+              data: [
+                this.state.unitTestPercentage / 100,
+                this.state.quizPercentage / 100,
+              ],
+            }}
             width={screenWidth}
             height={220}
             strokeWidth={16}
@@ -346,27 +439,98 @@ export default class App extends React.Component {
             hideLegend={false}
           />
         </View>
+        <View>
+          <Card>
+            <CardItem header bordered>
+              <Text>Quizzes</Text>
+            </CardItem>
+            <CardItem bordered>
+              <Body>
+                <Grid>
+                  <Col>
+                    <Text>{`Total Quizzes:`}</Text>
+                  </Col>
+                  <Col>
+                    <Text>{this.state.totalQuizzes}</Text>
+                  </Col>
+                </Grid>
+                <Grid>
+                  <Col>
+                    <Text>Your Total Score:</Text>
+                  </Col>
+                  <Col>
+                    <Text>{this.state.totalQuizzesScore}</Text>
+                  </Col>
+                </Grid>
+              </Body>
+            </CardItem>
+          </Card>
+          <Card>
+            <CardItem header bordered>
+              <Text>Unit Tests</Text>
+            </CardItem>
+            <CardItem bordered>
+              <Body>
+                <Grid>
+                  <Col>
+                    <Text>{`Total Unit Test Score:`}</Text>
+                  </Col>
+                  <Col>
+                    <Text>{this.state.totalUnitTest}</Text>
+                  </Col>
+                </Grid>
+                <Grid>
+                  <Col>
+                    <Text>{`Your Total Score:`}</Text>
+                  </Col>
+                  <Col>
+                    <Text>{this.state.totalUnitTestScore}</Text>
+                  </Col>
+                </Grid>
+              </Body>
+            </CardItem>
+          </Card>
+        </View>
       </Content>
     );
   }
 
   async resetDB() {
-    db = null;
-    await FileSystem.deleteAsync(FileSystem.documentDirectory + "SQLite/");
+    Alert.alert("Reset DB", "Reset DB requires app reset. Reset now?", [
+      {
+        text: "Cancel",
+        onPress: () => console.log("Cancel Pressed"),
+        style: "cancel",
+      },
+      {
+        text: "OK",
+        onPress: async () => {
+          db = null;
+          await FileSystem.deleteAsync(
+            FileSystem.documentDirectory + "SQLite/"
+          );
 
-    if (
-      !(await FileSystem.getInfoAsync(FileSystem.documentDirectory + "SQLite"))
-        .exists
-    ) {
-      await FileSystem.makeDirectoryAsync(
-        FileSystem.documentDirectory + "SQLite"
-      );
-    }
-    await FileSystem.downloadAsync(
-      Asset.fromModule(require("./assets/db/andruino.db")).uri,
-      FileSystem.documentDirectory + "SQLite/andruino.db"
-    );
-    db = SQLite.openDatabase("andruino.db");
+          if (
+            !(
+              await FileSystem.getInfoAsync(
+                FileSystem.documentDirectory + "SQLite"
+              )
+            ).exists
+          ) {
+            await FileSystem.makeDirectoryAsync(
+              FileSystem.documentDirectory + "SQLite"
+            );
+          }
+          await FileSystem.downloadAsync(
+            Asset.fromModule(require("./assets/db/andruino.db")).uri,
+            FileSystem.documentDirectory + "SQLite/andruino.db"
+          );
+          db = SQLite.openDatabase("andruino.db");
+          Restart();
+        },
+      },
+    ]);
+
     // console.log(
     //   await FileSystem.readDirectoryAsync(
     //     FileSystem.documentDirectory + "SQLite/"
@@ -404,6 +568,9 @@ export default class App extends React.Component {
             provide feedback.
           </Text>
           <Button
+            full
+            warning
+            style={{ margin: 20 }}
             onPress={(x) => {
               this.resetDB(x);
             }}
@@ -423,12 +590,12 @@ export default class App extends React.Component {
     return (
       <SafeAreaView style={{ flex: 1 }}>
         <View style={{}}>
-          <Header style={{}} hasTabs>
-            <Left>
+          <Header style={{ paddingLeft: 35 }} hasTabs>
+            {/* <Left>
               <Button transparent>
                 <Icon name="arrow-back" />
               </Button>
-            </Left>
+            </Left> */}
             <Body>
               <Title>Andruino</Title>
             </Body>

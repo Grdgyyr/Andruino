@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { StyleSheet, ScrollView, View } from "react-native";
+import { StyleSheet, ScrollView, View, Alert } from "react-native";
 import { Asset } from "expo-asset";
 
 import AppLoading from "expo-app-loading";
@@ -42,8 +42,8 @@ const abc = [
   <Picker.Item label="-" key={"a5"} value="-" />,
 ];
 const truefalse = [
-  <Picker.Item label="A" key={"a1"} value="TRUE" />,
-  <Picker.Item label="B" key={"a2"} value="FALSE" />,
+  <Picker.Item label="TRUE" key={"a1"} value={1} />,
+  <Picker.Item label="FALSE" key={"a2"} value={2} />,
   <Picker.Item label="-" key={"a3"} value="-" />,
 ];
 
@@ -54,7 +54,7 @@ export default class Quiz extends Component {
       isReady: false,
       quizContent: null,
       content: 1,
-      answers: [{ id: 1, value: "-", wrong: false }],
+      answers: [{ id: 1, value: "", wrong: false }],
       quizData: [],
       inputChange: this.inputChange.bind(this),
       contentData: [],
@@ -100,6 +100,96 @@ export default class Quiz extends Component {
     }
   }
 
+  async getQuiz(data, quizImg) {
+    return new Promise((resolve, reject) => {
+      this.props.db.transaction(
+        (tx) => {
+          tx.executeSql(
+            `select * from quiz where quizId = ${Number(data.id)}`,
+            [],
+            (_, { rows }) => {
+              //rows.length === 0
+              if (rows.length === 0) {
+                data.ans.forEach((e, i) => {
+                  this.setState((a) => ({
+                    answers: {
+                      ...a.answers,
+                      [i + 1]: { id: i + 1, value: "-", wrong: false },
+                    },
+                  }));
+                });
+                this.setState((a) => ({
+                  content: 2,
+                  contentData: data,
+                  quizPictures: quizImg,
+                  newQuiz: true,
+                }));
+              } else {
+                const dbAns = rows._array[0].answer.split(",");
+                let finalScore = 0;
+                //let userAnswers = [];
+                data.ans.forEach((e, i) => {
+                  if (
+                    this.state.contentData.type === 0 ||
+                    this.state.contentData.type === 1
+                  ) {
+                    if (e.toUpperCase() === dbAns[i].toUpperCase()) {
+                      finalScore++;
+
+                      this.setState((a) => ({
+                        answers: {
+                          ...a.answers,
+                          [i + 1]: { id: i + 1, value: dbAns[i], wrong: false },
+                        },
+                      }));
+                    } else {
+                      this.setState((a) => ({
+                        answers: {
+                          ...a.answers,
+                          [i + 1]: { id: i + 1, value: dbAns[i], wrong: true },
+                        },
+                      }));
+                    }
+                  } else {
+                    if (e === dbAns[i]) {
+                      finalScore++;
+
+                      this.setState((a) => ({
+                        answers: {
+                          ...a.answers,
+                          [i + 1]: { id: i + 1, value: dbAns[i], wrong: false },
+                        },
+                      }));
+                    } else {
+                      this.setState((a) => ({
+                        answers: {
+                          ...a.answers,
+                          [i + 1]: { id: i + 1, value: dbAns[i], wrong: true },
+                        },
+                      }));
+                    }
+                  }
+                });
+
+                this.setState(
+                  (a) => ({
+                    content: 2,
+                    contentData: data,
+                    quizPictures: quizImg,
+                    newQuiz: false,
+                    score: finalScore,
+                  }),
+                  () => resolve(true)
+                );
+              }
+            }
+          );
+        },
+        (err) => console.log(err)
+      );
+    });
+  }
+
   async loadQuiz(data) {
     const imgData = data.img;
     let quizImg = [];
@@ -113,64 +203,7 @@ export default class Quiz extends Component {
     }
     //console.log(data);
 
-    this.props.db.transaction(
-      (tx) => {
-        tx.executeSql(
-          `select * from quiz where quizId = ${Number(data.id)}`,
-          [],
-          (_, { rows }) => {
-            //rows.length === 0
-            if (rows.length === 0) {
-              data.ans.forEach((e, i) => {
-                this.setState((a) => ({
-                  answers: {
-                    ...a.answers,
-                    [i + 1]: { id: i + 1, value: "-", wrong: false },
-                  },
-                }));
-              });
-              this.setState((a) => ({
-                content: 2,
-                contentData: data,
-                quizPictures: quizImg,
-                newQuiz: true,
-              }));
-            } else {
-              const dbAns = rows._array[0].answer.split(",");
-              let finalScore = 0;
-              let userAnswers = [];
-              data.ans.forEach((e, i) => {
-                if (e.toUpperCase() === dbAns[i].toUpperCase()) {
-                  finalScore++;
-
-                  this.setState((a) => ({
-                    answers: {
-                      ...a.answers,
-                      [i + 1]: { id: i + 1, value: dbAns[i], wrong: false },
-                    },
-                  }));
-                } else {
-                  this.setState((a) => ({
-                    answers: {
-                      ...a.answers,
-                      [i + 1]: { id: i + 1, value: dbAns[i], wrong: true },
-                    },
-                  }));
-                }
-              });
-              this.setState((a) => ({
-                content: 2,
-                contentData: data,
-                quizPictures: quizImg,
-                newQuiz: false,
-                score: finalScore,
-              }));
-            }
-          }
-        );
-      },
-      (err) => console.log(err)
-    );
+    await this.getQuiz(data, quizImg);
 
     // const inputs = data.ans.map((x, index) => {
     //   return React.createElement(
@@ -208,24 +241,48 @@ export default class Quiz extends Component {
     const arr = this.state.contentData.ans;
     let finalScore = 0;
     let userAnswers = [];
+    let ans = this.state.answers;
 
-    arr.forEach((e, i) => {
-      let ans = this.state.answers;
-      userAnswers.push(this.state.answers[i + 1].value.toUpperCase());
-      if (this.state.answers[i + 1].value.toUpperCase() === e.toUpperCase()) {
-        finalScore++;
+    for (let i = 0; i < arr.length; i++) {
+      const e = arr[i];
 
-        ans[i + 1] = { ...ans[i + 1], wrong: false };
-      } else {
-        ans[i + 1] = { ...ans[i + 1], wrong: true };
+      console.log(this.state.contentData);
+
+      if (
+        this.state.contentData.type === 0 ||
+        this.state.contentData.type === 1
+      ) {
+        userAnswers.push(this.state.answers[i + 1].value.toUpperCase());
+        if (this.state.answers[i + 1].value.toUpperCase() === e.toUpperCase()) {
+          finalScore++;
+
+          ans[i + 1] = { ...ans[i + 1], wrong: false };
+        } else {
+          ans[i + 1] = { ...ans[i + 1], wrong: true };
+        }
       }
-      this.setState({ answers: ans }, (c) => {
-        // console.log(
-        //   this.state.answers[i + 1].value.toUpperCase(),
-        //   e.toUpperCase(),
-        //   this.state.answers[i + 1].wrong
-        // );
-      });
+      if (this.state.contentData.type === 2) {
+        userAnswers.push(this.state.answers[i + 1].value);
+        if (this.state.answers[i + 1].value === e) {
+          finalScore++;
+
+          ans[i + 1] = { ...ans[i + 1], wrong: false };
+        } else {
+          ans[i + 1] = { ...ans[i + 1], wrong: true };
+        }
+      }
+    }
+
+    // arr.forEach((e, i) => {
+
+    // });
+
+    this.setState({ answers: ans }, (c) => {
+      // console.log(
+      //   this.state.answers[i + 1].value.toUpperCase(),
+      //   e.toUpperCase(),
+      //   this.state.answers[i + 1].wrong
+      // );
     });
 
     // console.log(
@@ -305,13 +362,13 @@ export default class Quiz extends Component {
                 {x.description}
               </Text> */}
                         </Body>
-                        <Right>
+                        {/* <Right>
                           <Entypo
                             name="star-outlined"
                             size={24}
                             color="black"
                           />
-                        </Right>
+                        </Right> */}
                       </ListItem>
                     );
                   })}
@@ -328,25 +385,20 @@ export default class Quiz extends Component {
                 <View
                   style={{
                     flexDirection: "row",
-                    marginTop: 10,
-                    marginBottom: 10,
+                    // marginTop: 10,
+                    // marginBottom: 10,
                   }}
                 >
-                  <Button
-                    onPress={(x) => {
-                      //this.loadListQuiz();
-                      this.setState({ content: 1 });
-                    }}
-                  >
-                    <Icon name="arrow-back" />
-                  </Button>
                   <View style={{ flexGrow: 1 }}>
                     <Text
                       style={{
+                        paddingTop: 15,
+                        paddingBottom: 15,
                         textAlign: "center",
                         textAlignVertical: "center",
                         fontSize: 25,
-                        fontWeight: "bold",
+                        fontWeight: "900",
+                        color: this.state.newQuiz ? "black" : "white",
                         backgroundColor: this.state.newQuiz
                           ? "transparent"
                           : "green",
@@ -356,7 +408,7 @@ export default class Quiz extends Component {
                         if (this.state.newQuiz) {
                           return this.state.contentData.name;
                         } else {
-                          return `${this.state.contentData.name} Score(${this.state.score}/${this.state.contentData.ans.length})`;
+                          return `${this.state.contentData.name} Score (${this.state.score}/${this.state.contentData.ans.length})`;
                         }
                       })()}
                     </Text>
@@ -439,20 +491,69 @@ export default class Quiz extends Component {
                         : null
                     );
                   })}
+                  {this.state.newQuiz ? (
+                    <>
+                      <Button
+                        full
+                        success
+                        style={{ margin: 7, marginBottom: 15 }}
+                        onPress={(x) => {
+                          Alert.alert(
+                            "Confirm Submit",
+                            "Are you sure you want to submit your answers?",
+                            [
+                              {
+                                text: "Cancel",
+                                onPress: () => console.log("Cancel Pressed"),
+                                style: "cancel",
+                              },
+                              { text: "OK", onPress: () => this.checkQuiz(x) },
+                            ]
+                          );
+                        }}
+                      >
+                        <Text>Submit</Text>
+                      </Button>
+                    </>
+                  ) : null}
                   <Button
+                    full
+                    success
+                    style={{ margin: 7, marginBottom: 15 }}
                     onPress={(x) => {
-                      this.checkQuiz(x);
+                      //this.loadListQuiz();
+                      if (this.state.newQuiz) {
+                        Alert.alert(
+                          "Confirm Action",
+                          "Are you sure you want to go back? Doing so will not save your answers",
+                          [
+                            {
+                              text: "Cancel",
+                              onPress: () => console.log("Cancel Pressed"),
+                              style: "cancel",
+                            },
+                            {
+                              text: "OK",
+                              onPress: () => this.setState({ content: 1 }),
+                            },
+                          ]
+                        );
+                      } else {
+                        this.setState({ content: 1 });
+                      }
                     }}
                   >
-                    <Text>Submit</Text>
+                    <Text>Back to quizzes</Text>
+                    {/* <Icon name="arrow-back" /> */}
                   </Button>
-                  <Button
+
+                  {/* <Button
                     onPress={(x) => {
                       this.read(x);
                     }}
                   >
                     <Text>READ</Text>
-                  </Button>
+                  </Button> */}
                 </ScrollView>
               </View>
             );

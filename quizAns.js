@@ -22,6 +22,7 @@ export const defaultQuizData = [
     userAns: [],
     dateFinished: "",
     type: 1,
+    examType: 1,
     img: [require("./assets/quiz/1.png")],
   },
   {
@@ -44,6 +45,7 @@ export const defaultQuizData = [
     userAns: [],
     dateFinished: "",
     type: 1,
+    examType: 1,
     img: [require("./assets/quiz/2-1.png")],
   },
   {
@@ -52,7 +54,8 @@ export const defaultQuizData = [
     ans: ["e", "b", "j", "d", "k", "a", "g", "h", "f", "c", "i", "l"],
     userAns: [],
     dateFinished: "",
-    type: 0,
+    type: 1,
+    examType: 1,
     img: [require("./assets/quiz/2-2.png")],
   },
   {
@@ -73,6 +76,7 @@ export const defaultQuizData = [
     userAns: [],
     dateFinished: "",
     type: 1,
+    examType: 1,
     img: [require("./assets/quiz/3.png"), require("./assets/quiz/3-1.png")],
   },
   {
@@ -82,6 +86,7 @@ export const defaultQuizData = [
     userAns: [],
     dateFinished: "",
     type: 1,
+    examType: 1,
     img: [require("./assets/quiz/4.png")],
   },
   {
@@ -91,6 +96,7 @@ export const defaultQuizData = [
     userAns: [],
     dateFinished: "",
     type: 1,
+    examType: 1,
     img: [require("./assets/quiz/5.png")],
   },
   {
@@ -100,6 +106,7 @@ export const defaultQuizData = [
     userAns: [],
     dateFinished: "",
     type: 2,
+    examType: 1,
     img: [require("./assets/quiz/6.png")],
   },
   {
@@ -140,6 +147,7 @@ export const defaultQuizData = [
     userAns: [],
     dateFinished: "",
     type: 0,
+    examType: 2,
     img: [
       require("./assets/quiz/unit1.png"),
       require("./assets/quiz/unit1-1.png"),
@@ -154,6 +162,7 @@ export const defaultQuizData = [
     userAns: [],
     dateFinished: "",
     type: 0,
+    examType: 1,
     img: [require("./assets/quiz/7.png")],
   },
   {
@@ -174,6 +183,7 @@ export const defaultQuizData = [
     userAns: [],
     dateFinished: "",
     type: 1,
+    examType: 1,
     img: [require("./assets/quiz/8.png")],
   },
   {
@@ -182,7 +192,8 @@ export const defaultQuizData = [
     ans: ["b", "e", "j", "h", "i", "c", "g", "d", "a", "f"],
     userAns: [],
     dateFinished: "",
-    type: 0,
+    type: 1,
+    examType: 1,
     img: [require("./assets/quiz/9.png")],
   },
   {
@@ -192,15 +203,28 @@ export const defaultQuizData = [
     userAns: [],
     dateFinished: "",
     type: 1,
+    examType: 1,
     img: [require("./assets/quiz/10.png")],
   },
   {
     id: 13,
     name: "Quiz 11",
-    ans: [1, "written", "less than", 1, 1, 1, 1, 2, 1, 1],
+    ans: [
+      "true",
+      "written",
+      "less than",
+      "true",
+      "true",
+      "true",
+      "true",
+      "2",
+      "true",
+      "true",
+    ],
     userAns: [],
     dateFinished: "",
-    type: 3,
+    type: 1,
+    examType: 1,
     img: [require("./assets/quiz/11.png")],
   },
   {
@@ -240,6 +264,7 @@ export const defaultQuizData = [
     ],
     userAns: [],
     type: 0,
+    examType: 2,
     dateFinished: "",
     img: [
       require("./assets/quiz/unit2.png"),

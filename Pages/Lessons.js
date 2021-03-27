@@ -164,9 +164,9 @@ export default class Lessons extends Component {
                     {x.description}
                   </Text> */}
                 </Body>
-                <Right>
+                {/* <Right>
                   <Entypo name="star-outlined" size={24} color="black" />
-                </Right>
+                </Right> */}
               </ListItem>
             );
           })}
