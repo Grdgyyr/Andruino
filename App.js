@@ -8,6 +8,7 @@ import {
   FlatList,
   Dimensions,
   Alert,
+  ScrollView,
 } from "react-native";
 //import { AppLoading } from "expo";
 import AppLoading from "expo-app-loading";
@@ -45,6 +46,7 @@ import { Asset } from "expo-asset";
 import * as FileSystem from "expo-file-system";
 import { Restart } from "fiction-expo-restart";
 import { Col, Row, Grid } from "react-native-easy-grid";
+import * as Permissions from "expo-permissions";
 import {
   LineChart,
   BarChart,
@@ -52,6 +54,9 @@ import {
   ProgressChart,
 } from "react-native-chart-kit";
 import { defaultQuizData } from "./quizAns";
+import * as Application from "expo-application";
+import * as IntentLauncher from "expo-intent-launcher";
+import { Linking } from "expo";
 const screenWidth = Dimensions.get("window").width;
 
 const chartConfig = {
@@ -64,7 +69,7 @@ const chartConfig = {
   strokeWidth: 2, // optional, default 3
   barPercentage: 0.5,
 };
-let db = null;
+const db = SQLite.openDatabase("db.db");
 
 export default class App extends React.Component {
   constructor(props) {
@@ -95,19 +100,51 @@ export default class App extends React.Component {
     });
     this.setState({ isReady: true });
 
-    if (
-      !(await FileSystem.getInfoAsync(FileSystem.documentDirectory + "SQLite"))
-        .exists
-    ) {
-      await FileSystem.makeDirectoryAsync(
-        FileSystem.documentDirectory + "SQLite"
-      );
-    }
+    // if (
+    //   !(await FileSystem.getInfoAsync(FileSystem.documentDirectory + "SQLite"))
+    //     .exists
+    // ) {
+    //   await FileSystem.makeDirectoryAsync(
+    //     FileSystem.documentDirectory + "SQLite"
+    //   );
+    // }
+
     // await FileSystem.downloadAsync(
     //   Asset.fromModule(require("./assets/db/andruino.db")).uri,
     //   FileSystem.documentDirectory + "SQLite/andruino.db"
     // );
-    db = SQLite.openDatabase("andruino.db");
+    this.checkFileAccessPermission();
+    db.transaction((tx) => {
+      tx.executeSql(
+        "create table if not exists user ( id integer primary key, name text, school text, teacher text, quizData text, projectData text, lessonData text);",
+        [],
+        (ax) => {
+          //console.log("===== TABLE USER CREATED =====");
+        },
+        (x) => console.log(x)
+      );
+      tx.executeSql(
+        "create table if not exists quiz ( id integer primary key, quizId integer, answer text);",
+        [],
+        (ax) => {
+          //console.log("===== TABLE QUIZ CREATED =====");
+        },
+        (x) => console.log(x)
+      );
+      tx.executeSql(
+        "create table if not exists settings ( id integer primary key, isNew integer default 1, hasFileAccess integer default 0 );",
+        [],
+        (ax) => {
+          //console.log("===== TABLE QUIZ CREATED =====");
+        },
+        (x) => console.log(x)
+      );
+      tx.executeSql(`select * from user`, [], (_, { rows }) => {
+        //console.log("===== DATA =====");
+        //console.log(rows._array[0]);
+      });
+    });
+
     //let db = SQLite.openDatabase("andruino.db");
 
     //console.log(defaultQuizData);
@@ -121,6 +158,48 @@ export default class App extends React.Component {
     //   },
     //   (x) => console.log()
     // );
+  }
+
+  open_settings() {
+    // TODO: it might work on SDK 37?
+    // Linking.openSettings();
+    if (Platform.OS === "ios") {
+      Linking.openURL(`app-settings:`);
+    } else {
+      const bundleIdentifier = Application.applicationId;
+      IntentLauncher.startActivityAsync(
+        IntentLauncher.ACTION_APPLICATION_DETAILS_SETTINGS,
+        {
+          data: `package:${bundleIdentifier}`,
+        }
+      );
+    }
+  }
+
+  async checkFileAccessPermission() {
+    const { status, permissions } = await Permissions.askAsync(
+      Permissions.MEDIA_LIBRARY
+    );
+    if (status !== "granted") {
+      Alert.alert(
+        "No File Access Permission",
+        "please goto setting and turn on File access permission",
+        [
+          { text: "cancel", onPress: () => console.log("cancel") },
+          { text: "Allow", onPress: () => this.open_settings() },
+        ],
+        { cancelable: false }
+      );
+      return;
+    } else {
+      //alert("");
+      //throw new Error("Location permission not granted");
+    }
+
+    // const { status } = await Permissions.getAsync(Permissions.FileSystem);
+    // if (status !== 'granted') {
+    //   alert('File access to your device is required for this application to run. Please enable File access permission.');
+    // }
   }
 
   inputChange = (e) => {
@@ -153,23 +232,26 @@ export default class App extends React.Component {
     db.transaction(
       (tx) => {
         tx.executeSql(`select * from user`, [], (_, { rows }) => {
-          this.setState(
-            (a) => ({
-              txtName: {
-                ...a.txtName,
-                value: rows._array[0].name,
-              },
-              txtSchool: {
-                ...a.txtSchool,
-                value: rows._array[0].school,
-              },
-              txtTeacher: {
-                ...a.txtTeacher,
-                value: rows._array[0].teacher,
-              },
-            }),
-            (cb) => {}
-          );
+          if (rows._array[0]) {
+            this.setState(
+              (a) => ({
+                txtName: {
+                  ...a.txtName,
+                  value: rows._array[0].name,
+                },
+                txtSchool: {
+                  ...a.txtSchool,
+                  value: rows._array[0].school,
+                },
+                txtTeacher: {
+                  ...a.txtTeacher,
+                  value: rows._array[0].teacher,
+                },
+              }),
+              (cb) => {}
+            );
+          } else {
+          }
         });
       },
       (x) => console.log(x)
@@ -505,28 +587,81 @@ export default class App extends React.Component {
       {
         text: "OK",
         onPress: async () => {
-          db = null;
-          await FileSystem.deleteAsync(
-            FileSystem.documentDirectory + "SQLite/"
-          );
+          // db = null;
+          // await FileSystem.deleteAsync(
+          //   FileSystem.documentDirectory + "SQLite/"
+          // );
 
-          if (
-            !(
-              await FileSystem.getInfoAsync(
-                FileSystem.documentDirectory + "SQLite"
-              )
-            ).exists
-          ) {
-            await FileSystem.makeDirectoryAsync(
-              FileSystem.documentDirectory + "SQLite"
-            );
-          }
-          await FileSystem.downloadAsync(
-            Asset.fromModule(require("./assets/db/andruino.db")).uri,
-            FileSystem.documentDirectory + "SQLite/andruino.db"
+          // if (
+          //   !(
+          //     await FileSystem.getInfoAsync(
+          //       FileSystem.documentDirectory + "SQLite"
+          //     )
+          //   ).exists
+          // ) {
+          //   await FileSystem.makeDirectoryAsync(
+          //     FileSystem.documentDirectory + "SQLite"
+          //   );
+          // }
+          // await FileSystem.downloadAsync(
+          //   Asset.fromModule(require("./assets/db/andruino.db")).uri,
+          //   FileSystem.documentDirectory + "SQLite/andruino.db"
+          // );
+          // db = SQLite.openDatabase("andruino.db");
+          db.transaction(
+            (tx) => {
+              tx.executeSql(
+                "drop table if exists user;",
+                [],
+                (ax) => {},
+                (x) => console.log(x)
+              );
+              tx.executeSql(
+                "create table if not exists user ( id integer primary key, name text, school text, teacher text, quizData text, projectData text, lessonData text);",
+                [],
+                (ax) => {
+                  //console.log("===== TABLE USER CREATED =====");
+                },
+                (x) => console.log(x)
+              );
+              tx.executeSql(
+                "drop table if exists quiz;",
+                [],
+                (ax) => {},
+                (x) => console.log(x)
+              );
+              tx.executeSql(
+                "create table if not exists quiz ( id integer primary key, quizId integer, answer text);",
+                [],
+                (ax) => {
+                  //console.log("===== TABLE QUIZ CREATED =====");
+                },
+                (x) => console.log(x)
+              );
+              tx.executeSql(
+                "drop table if exists settings;",
+                [],
+                (ax) => {},
+                (x) => console.log(x)
+              );
+              tx.executeSql(
+                "create table if not exists settings ( id integer primary key, isNew integer default 1, hasFileAccess integer default 0 );",
+                [],
+                (ax) => {
+                  //console.log("===== TABLE QUIZ CREATED =====");
+                },
+                (x) => console.log(x)
+              );
+              tx.executeSql(`select * from user`, [], (_, { rows }) => {
+                //console.log("===== DATA =====");
+                //console.log(rows._array[0]);
+              });
+            },
+            null,
+            () => {
+              Restart();
+            }
           );
-          db = SQLite.openDatabase("andruino.db");
-          Restart();
         },
       },
     ]);
@@ -540,45 +675,51 @@ export default class App extends React.Component {
 
   loadHome() {
     return (
-      <Container
-        style={{
-          flexDirection: "row",
-          alignContent: "center",
-          justifyContent: "center",
-        }}
-      >
-        <View style={{ flex: 1, paddingTop: 30 }}>
-          <Image
-            style={{
-              width: "50%",
-              height: "50%",
-              alignSelf: "center",
-            }}
-            resizeMode="center"
-            source={require("@expo/../../assets/icon.png")}
-          />
+      <ScrollView>
+        <Container
+          style={{
+            flexDirection: "row",
+            alignContent: "center",
+            justifyContent: "center",
+          }}
+        >
+          <View style={{ flex: 1, paddingTop: 30 }}>
+            <Image
+              style={{
+                width: "50%",
+                height: "50%",
+                alignSelf: "center",
+              }}
+              resizeMode="center"
+              source={require("@expo/../../assets/icon.png")}
+            />
 
-          <Text style={{ textAlign: "justify", padding: 15 }}>
-            In this Application, the learners can see predefined images with
-            explanations, and code snippets, which they can copy and paste into
-            the Arduino IDE. Mobile Application for Learning Arduino Uno can
-            help the students learn the Arduino Uno without connecting to WiFi.
-            The app will contain lessons on Arduino Uno that are needed to know.
-            Additionally, it will include quizzes and user’s performance to
-            provide feedback.
-          </Text>
-          <Button
-            full
-            warning
-            style={{ margin: 20 }}
-            onPress={(x) => {
-              this.resetDB(x);
-            }}
-          >
-            <Text>Reset DB</Text>
-          </Button>
-        </View>
-      </Container>
+            <Text style={{ textAlign: "justify", padding: 15 }}>
+              In this Application, the learners can see predefined images with
+              explanations, and code snippets, which they can copy and paste
+              into the Arduino IDE. Mobile Application for Learning Arduino Uno
+              can help the students learn the Arduino Uno without connecting to
+              WiFi. The app will contain lessons on Arduino Uno that are needed
+              to know. Additionally, it will include quizzes and user’s
+              performance to provide feedback.
+            </Text>
+
+            <Text style={{ textAlign: "justify", padding: 15 }}>
+              Version 1.1.0
+            </Text>
+            <Button
+              full
+              warning
+              style={{ margin: 20 }}
+              onPress={(x) => {
+                this.resetDB(x);
+              }}
+            >
+              <Text>Reset DB</Text>
+            </Button>
+          </View>
+        </Container>
+      </ScrollView>
     );
   }
 
@@ -668,7 +809,7 @@ export default class App extends React.Component {
                   <Text>1</Text>
                 </Badge> */}
                 <Entypo name="progress-full" size={24} color="black" />
-                <Text>PERFORMANCE</Text>
+                <Text>SCORES</Text>
               </Button>
 
               <Button
