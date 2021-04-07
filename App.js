@@ -705,7 +705,7 @@ export default class App extends React.Component {
             </Text>
 
             <Text style={{ textAlign: "justify", padding: 15 }}>
-              Version 1.1.0
+              Version 1.1.1
             </Text>
             <Button
               full
